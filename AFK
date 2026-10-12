@@ -1,0 +1,193 @@
+-- [[ Anti-AFK UI Script - Floating & Minimizable ]] --
+
+local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
+local VirtualUser = game:GetService("VirtualUser")
+local UserInputService = game:GetService("UserInputService")
+
+local LocalPlayer = Players.LocalPlayer
+
+-- ลบ UI เก่าออกหากเปิดซ้ำ
+if CoreGui:FindFirstChild("AntiAFK_UI") then
+    CoreGui.AntiAFK_UI:Destroy()
+end
+
+-- สร้าง ScreenGui
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "AntiAFK_UI"
+ScreenGui.Parent = CoreGui
+ScreenGui.ResetOnSpawn = false
+
+-- ตัวเรือน UI หลัก (Main Frame) - หน้าต่างลอย
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 320, 0, 420)
+MainFrame.Position = UDim2.new(0.5, -160, 0.5, -210)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+MainFrame.BorderSizePixel = 0
+MainFrame.ClipsDescendants = true
+MainFrame.Parent = ScreenGui
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 16)
+UICorner.Parent = MainFrame
+
+-- รูปภาพพื้นหลัง (Custom Background)
+local BackgroundImage = Instance.new("ImageLabel")
+BackgroundImage.Name = "BackgroundImage"
+BackgroundImage.Size = UDim2.new(1, 0, 1, 0)
+BackgroundImage.Position = UDim2.new(0, 0, 0, 0)
+BackgroundImage.Image = "rbxassetid://1000046848" -- เลขไอดีรูปภาพพื้นหลัง
+BackgroundImage.ScaleType = Enum.ScaleType.Crop
+BackgroundImage.ImageTransparency = 0.25
+BackgroundImage.Parent = MainFrame
+
+-- เลเยอร์สีดำโปร่งแสงซ้อนทับภาพ
+local Overlay = Instance.new("Frame")
+Overlay.Size = UDim2.new(1, 0, 1, 0)
+Overlay.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+Overlay.BackgroundTransparency = 0.45
+Overlay.Parent = MainFrame
+
+-- ส่วนหัวของ UI (Header / Title Bar สำหรับลากและกดปุ่มย่อ)
+local TopBar = Instance.new("Frame")
+TopBar.Size = UDim2.new(1, 0, 0, 45)
+TopBar.BackgroundTransparency = 1
+TopBar.Parent = MainName or MainFrame
+
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Size = UDim2.new(1, -60, 1, 0)
+TitleLabel.Position = UDim2.new(0, 15, 0, 0)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Text = "⚙️ ANTI-AFK MANAGER"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.TextSize = 18
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+TitleLabel.Parent = TopBar
+
+-- ปุ่มย่อ/ขยาย หน้าต่าง (-)
+local MinimizeButton = Instance.new("TextButton")
+MinimizeButton.Size = UDim2.new(0, 35, 0, 35)
+MinimizeButton.Position = UDim2.new(1, -45, 0, 5)
+MinimizeButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+MinimizeButton.BackgroundTransparency = 0.5
+MinimizeButton.Text = "-"
+MinimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinimizeButton.TextSize = 22
+MinimizeButton.Font = Enum.Font.GothamBold
+MinimizeButton.Parent = TopBar
+
+local MinCorner = Instance.new("UICorner")
+MinCorner.CornerRadius = UDim.new(0, 8)
+MinCorner.Parent = MinimizeButton
+
+-- คอนเทนเนอร์เก็บปุ่มและเนื้อหาด้านใน (เพื่อให้ซ่อนได้เวลาย่อหน้าต่าง)
+local Container = Instance.new("Frame")
+Container.Size = UDim2.new(1, 0, 1, -45)
+Container.Position = UDim2.new(0, 0, 0, 45)
+Container.BackgroundTransparency = 1
+Container.Parent = MainFrame
+
+-- ปุ่ม เปิด/ปิด AFK Mode
+local ToggleButton = Instance.new("TextButton")
+ToggleButton.Size = UDim2.new(1, -30, 0, 50)
+ToggleButton.Position = UDim2.new(0, 15, 0, 15)
+ToggleButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+ToggleButton.Text = "ENABLE AFK MODE\n(เปิดใช้งาน)"
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleButton.TextSize = 16
+ToggleButton.Font = Enum.Font.GothamBold
+ToggleButton.Parent = Container
+
+local BtnCorner = Instance.new("UICorner")
+BtnCorner.CornerRadius = UDim.new(0, 12)
+BtnCorner.Parent = ToggleButton
+
+-- กล่องสถานะการทำงาน (Status Log Box)
+local StatusBox = Instance.new("TextLabel")
+StatusBox.Size = UDim2.new(1, -30, 0, 250)
+StatusBox.Position = UDim2.new(0, 15, 0, 80)
+StatusBox.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+StatusBox.BackgroundTransparency = 0.5
+StatusBox.Text = "Status: Ready\nระบบพร้อมใช้งาน\n\n- รองรับการลากเลื่อนหน้าจอ\n- กดปุ่ม '-' ที่มุมขวาบนเพื่อย่อ/ขยาย"
+StatusBox.TextColor3 = Color3.fromRGB(200, 255, 200)
+StatusBox.TextSize = 14
+StatusBox.Font = Enum.Font.Code
+StatusBox.TextWrapped = true
+StatusBox.TextXAlignment = Enum.TextXAlignment.Left
+StatusBox.TextYAlignment = Enum.TextYAlignment.Top
+StatusBox.Parent = Container
+
+local StatusCorner = Instance.new("UICorner")
+StatusCorner.CornerRadius = UDim.new(0, 8)
+StatusCorner.Parent = StatusBox
+
+-- ระบบลากเลื่อนหน้าจอ (Draggable สำหรับมือถือและคอมพิวเตอร์)
+local dragging, dragInput, dragStart, startPos
+
+TopBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        if dragging then
+            local delta = input.Position - dragStart
+            MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end
+end)
+
+-- ระบบย่อ/ขยายหน้าต่าง (Minimize / Maximize)
+local isMinimized = false
+MinimizeButton.MouseButton1Click:Connect(function()
+    isMinimized = not isMinimized
+    if isMinimized then
+        MinimizeButton.Text = "+"
+        Container.Visible = false
+        MainFrame:TweenSize(UDim2.new(0, 320, 0, 45), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
+    else
+        MinimizeButton.Text = "-"
+        Container.Visible = true
+        MainFrame:TweenSize(UDim2.new(0, 320, 0, 420), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
+    end
+end)
+
+-- ระบบการทำงาน Anti-AFK
+local isAFK = false
+local afkConnection = nil
+
+ToggleButton.MouseButton1Click:Connect(function()
+    isAFK = not isAFK
+    if isAFK then
+        ToggleButton.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+        ToggleButton.Text = "DISABLE AFK MODE\n(ปิดใช้งาน)"
+        StatusBox.Text = "Status: AFK Active!\nระบบกำลังทำงาน ป้องกันการโดนเตะออกจากเกม..."
+        
+        afkConnection = LocalPlayer.Idled:Connect(function()
+            VirtualUser:CaptureController()
+            VirtualUser:ClickButton2(Vector2.new())
+            StatusBox.Text = "Status: Anti-AFK Triggered!\n(" .. os.date("%X") .. ")"
+        end)
+    else
+        ToggleButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+        ToggleButton.Text = "ENABLE AFK MODE\n(เปิดใช้งาน)"
+        StatusBox.Text = "Status: Stopped\nหยุดการทำงานเรียบร้อย"
+        
+        if afkConnection then
+            afkConnection:Disconnect()
+            afkConnection = nil
+        end
+    end
+end)
